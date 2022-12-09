@@ -6,6 +6,7 @@ def setup_dirs(*dir_paths):
     """Create folder(s) if not existing
     Argument(s):
         *dir_paths: Absolute directory path(s)
+
     Returns:
         Nothing
     """
@@ -14,7 +15,7 @@ def setup_dirs(*dir_paths):
             os.makedirs(dir_path)
 
 
-def main():
+def test():
     """Driver code"""
     setup_dirs(defaults.INPUT_DIR, defaults.OUTPUT_DIR)
     input_dir = (
@@ -38,11 +39,25 @@ def main():
             output_file_path_h265 = os.path.join(output_dir, "H265", input_file)
             h264_transcode = Process(
                 target=video.transcode,
-                args=(input_file_path, output_file_path_h264, 25, "libx264", "aac"),
+                args=(
+                    input_file_path,
+                    output_file_path_h264,
+                    "libx264",
+                    25,
+                    "aac",
+                    44100,
+                ),
             )
             h265_transcode = Process(
                 target=video.transcode,
-                args=(input_file_path, output_file_path_h265, 25, "libx265", "aac"),
+                args=(
+                    input_file_path,
+                    output_file_path_h265,
+                    "libx265",
+                    25,
+                    "aac",
+                    44100,
+                ),
             )
             h264_transcode.start()
             h265_transcode.start()
@@ -54,4 +69,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    test()

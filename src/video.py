@@ -7,6 +7,7 @@ def is_video(path):
 
     Argument(s):
         path: Absolute file path
+
     Returns:
         True/False depending on whether the file is a video file
     """
@@ -22,6 +23,7 @@ def has_audio(path):
 
     Argument(s):
         path: Absolute file path
+
     Returns:
         True/False depending on whether the file contains audio stream(s)
     """
@@ -31,21 +33,30 @@ def has_audio(path):
         return False
 
 
-def transcode(input_file_path, output_file_path, framerate, video_codec, audio_codec):
+def transcode(
+    input_file_path,
+    output_file_path,
+    video_codec="libx264",
+    frame_rate=25,
+    audio_codec="aac",
+    sample_rate=44100,
+):
     """
     Transcodes MP4 video file into specified audio/video encoding and framerate
 
     Argument(s):
         input_file_path: Absolute input file path
         output_file_path: Absolute output file path
-        framerate: Target framerate of output video stream
-        video_codec: Target FFmpeg encoder of output video stream
-        audio_codec: Target FFmpeg encoder of output audio stream
+        video_codec: Target FFmpeg encoder of output video stream (Default: "libx264")
+        frame_rate: Target framerate of output video stream (Default: 25)
+        audio_codec: Target FFmpeg encoder of output audio stream (Default: "aac")
+        sample_rate: Target sample rate of output audio stream (Default: 44100)
+
     Returns:
         Nothing
     """
     stream = ffmpeg.input(input_file_path)
-    vid_stream = ffmpeg.filter(stream.video, "fps", fps=framerate)
+    vid_stream = ffmpeg.filter(stream.video, "fps", fps=frame_rate)
     if has_audio(input_file_path):
         final_stream = ffmpeg.output(
             vid_stream,
@@ -53,7 +64,7 @@ def transcode(input_file_path, output_file_path, framerate, video_codec, audio_c
             output_file_path,
             vcodec=video_codec,
             acodec=audio_codec,
-            ar=44100,
+            ar=sample_rate,
         )
     else:
         final_stream = ffmpeg.output(
