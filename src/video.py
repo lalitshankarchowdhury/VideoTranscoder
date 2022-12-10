@@ -36,10 +36,10 @@ def has_audio(path):
 def transcode(
     input_file_path,
     output_file_path,
-    video_codec="libx264",
     frame_rate=25,
-    audio_codec="aac",
+    video_codec="libx264",
     sample_rate=44100,
+    audio_codec="aac",
 ):
     """
     Transcodes MP4 video file into specified audio/video encoding and framerate
@@ -47,10 +47,10 @@ def transcode(
     Argument(s):
         input_file_path: Absolute input file path
         output_file_path: Absolute output file path
-        video_codec: Target FFmpeg encoder of output video stream (Default: "libx264")
         frame_rate: Target framerate of output video stream (Default: 25)
-        audio_codec: Target FFmpeg encoder of output audio stream (Default: "aac")
+        video_codec: Target FFmpeg encoder of output video stream (Default: "libx264")
         sample_rate: Target sample rate of output audio stream (Default: 44100)
+        audio_codec: Target FFmpeg encoder of output audio stream (Default: "aac")
 
     Returns:
         Nothing

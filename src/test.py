@@ -42,21 +42,21 @@ def test():
                 args=(
                     input_file_path,
                     output_file_path_h264,
-                    "libx264",
                     25,
-                    "aac",
+                    "libx264",
                     44100,
+                    "aac",
                 ),
             )
             h265_transcode = Process(
                 target=video.transcode,
                 args=(
                     input_file_path,
-                    output_file_path_h265,
-                    "libx265",
+                    output_file_path_h264,
                     25,
-                    "aac",
+                    "libx265",
                     44100,
+                    "aac",
                 ),
             )
             h264_transcode.start()
