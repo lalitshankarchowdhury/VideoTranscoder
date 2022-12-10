@@ -52,7 +52,7 @@ def test():
                 target=video.transcode,
                 args=(
                     input_file_path,
-                    output_file_path_h264,
+                    output_file_path_h265,
                     25,
                     "libx265",
                     44100,

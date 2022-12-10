@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from pathlib import Path
-import defaults
+import defaults, video
 
 is_transcoding = False
 video_codecs = {"H.264/AAC": "libx264", "H.265/HEVC": "libx265"}
@@ -51,6 +51,30 @@ class MainWindow(QMainWindow):
             event.ignore()
 
 
+class TableWidget(QTableWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRowCount(0)
+        self.setColumnCount(5)
+        self.setHorizontalHeaderLabels(
+            ["Path", "Frame rate", "Video codec", "Sample rate", "Audio codec"]
+        )
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        font = QFont()
+        font.setFamily(font.defaultFamily())
+        font.setPointSize(8)
+        self.setFont(font)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+    def delete_row(self, row):
+        for i in range(self.columnCount()):
+            self.takeItem(row, i)
+        self.removeRow(row)
+
+
 class MainWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -58,29 +82,29 @@ class MainWidget(QWidget):
         self.draw_input_group_box_items()
         self.draw_output_group_box_items()
         self.draw_options_box_items()
+        self.draw_run_box_items()
 
     def draw_group_boxes(self):
         layout = QVBoxLayout()
         self.input_group_box = QGroupBox("Select input files")
         self.output_group_box = QGroupBox("Select output folder")
-        self.options_group_box = QGroupBox("Configure transcoding options")
+        self.options_group_box = QGroupBox("Configure output options")
+        self.run_group_box = QGroupBox("Transcode")
         layout.addWidget(self.input_group_box)
         layout.addWidget(self.output_group_box)
         layout.addWidget(self.options_group_box)
+        layout.addWidget(self.run_group_box)
         self.setLayout(layout)
 
     def draw_input_group_box_items(self):
         layout = QHBoxLayout()
-        self.file_list = QListWidget()
-        self.file_list.setSelectionMode(
-            QAbstractItemView.SelectionMode.ExtendedSelection
-        )
+        self.file_table = TableWidget()
         button_layout = QVBoxLayout()
-        add_files_button = QPushButton("Add...")
+        add_files_button = QPushButton("➕ Add...")
         add_files_button.clicked.connect(self.add_files)
-        remove_files_button = QPushButton("Remove")
+        remove_files_button = QPushButton("➖ Remove")
         remove_files_button.clicked.connect(self.remove_files)
-        layout.addWidget(self.file_list)
+        layout.addWidget(self.file_table)
         button_layout.addWidget(add_files_button)
         button_layout.addWidget(remove_files_button)
         button_layout.addStretch()
@@ -91,7 +115,7 @@ class MainWidget(QWidget):
         layout = QHBoxLayout()
         self.output_dir = QLineEdit()
         self.output_dir.setText(defaults.OUTPUT_DIR)
-        output_dir_button = QPushButton("Browse...")
+        output_dir_button = QPushButton("📁 Browse...")
         output_dir_button.clicked.connect(self.add_output_dir)
         layout.addWidget(self.output_dir)
         layout.addWidget(output_dir_button)
@@ -102,22 +126,22 @@ class MainWidget(QWidget):
         self.video_codec = QComboBox()
         self.video_codec.addItems(sorted(video_codecs.keys()))
         self.video_codec.setCurrentIndex(1)
-        video_codec_label = QLabel("&Video codec: ")
+        video_codec_label = QLabel("Video codec: ")
         video_codec_label.setBuddy(self.video_codec)
         self.frame_rate = QComboBox()
         self.frame_rate.addItems(frame_rates)
         self.frame_rate.setCurrentIndex(2)
-        frame_rate_label = QLabel("&Frame rate: ")
+        frame_rate_label = QLabel("Frame rate: ")
         frame_rate_label.setBuddy(self.frame_rate)
         self.audio_codec = QComboBox()
         self.audio_codec.addItems(sorted(audio_codecs.keys()))
         self.audio_codec.setCurrentIndex(0)
-        audio_codec_label = QLabel("&Audio codec: ")
+        audio_codec_label = QLabel("Audio codec: ")
         audio_codec_label.setBuddy(self.audio_codec)
         self.sample_rate = QComboBox()
         self.sample_rate.addItems(sample_rates)
         self.sample_rate.setCurrentIndex(7)
-        sample_rate_label = QLabel("&Sample rate: ")
+        sample_rate_label = QLabel("Sample rate: ")
         sample_rate_label.setBuddy(self.sample_rate)
         layout.addWidget(frame_rate_label)
         layout.addWidget(self.frame_rate)
@@ -132,29 +156,49 @@ class MainWidget(QWidget):
         layout.addWidget(self.audio_codec)
         self.options_group_box.setLayout(layout)
 
+    def draw_run_box_items(self):
+        layout = QHBoxLayout()
+        start_button = QPushButton("▶️ Start")
+        pause_button = QPushButton("⏯️ Pause")
+        stop_button = QPushButton("⏹️ Stop")
+        progress_bar = QProgressBar()
+        layout.addWidget(start_button)
+        layout.addWidget(pause_button)
+        layout.addWidget(stop_button)
+        layout.addWidget(progress_bar)
+        self.run_group_box.setLayout(layout)
+
     def add_files(self):
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setViewMode(QFileDialog.ViewMode.Detail)
-        file_filter = "All Files (*.*)"
-        file_names = dialog.getOpenFileNames(
+        file_filter = "Videos (*.webm *.mpg *.mp2 *.mpeg *.mpe *.mpv *.ogg *.mp4 *.m4p *.m4v *.avi *.wmv *.mov *.qt *.flv *.swf *.avchd)"
+        files = dialog.getOpenFileNames(
             parent=self,
             caption="Add files",
             directory=str(defaults.HOME_DIR),
             filter=file_filter,
             options=QFileDialog.Option.ReadOnly,
         )
-        if file_names:
-            self.file_list.addItems(
-                [str(Path(file_name)) for file_name in file_names[0]]
-            )
+        if files:
+            file_paths = [str(Path(file)) for file in files[0]]
+            metadata_list = [video.get_metadata(file_path) for file_path in file_paths]
+            print(metadata_list)
+            i = self.file_table.rowCount()
+            for file_path, metadata in zip(file_paths, metadata_list):
+                if metadata:
+                    self.file_table.insertRow(self.file_table.rowCount())
+                    self.file_table.setItem(i, 0, QTableWidgetItem(file_path))
+                    for j in range(1, 5):
+                        self.file_table.setItem(i, j, QTableWidgetItem(metadata[j - 1]))
+                    i += 1
 
     def remove_files(self):
-        selected_files = self.file_list.selectedItems()
-        if not selected_files:
+        selected_items = self.file_table.selectedItems()
+        if not selected_items:
             return
-        for item in selected_files:
-            self.file_list.takeItem(self.file_list.row(item))
+        for item in selected_items:
+            self.file_table.delete_row(self.file_table.row(item))
 
     def add_output_dir(self):
         dialog = QFileDialog()

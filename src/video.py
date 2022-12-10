@@ -1,4 +1,4 @@
-import ffmpeg
+import ffmpeg, json
 
 
 def is_video(path):
@@ -11,9 +11,15 @@ def is_video(path):
     Returns:
         True/False depending on whether the file is a video file
     """
-    if ffmpeg.probe(path, select_streams="v")["streams"]:
-        return True
-    else:
+    try:
+        if (
+            ffmpeg.probe(path, select_streams="v")["streams"][0]["codec_type"]
+            == "video"
+        ):
+            return True
+        else:
+            return False
+    except:
         return False
 
 
@@ -27,10 +33,46 @@ def has_audio(path):
     Returns:
         True/False depending on whether the file contains audio stream(s)
     """
-    if ffmpeg.probe(path, select_streams="a")["streams"]:
-        return True
-    else:
+    try:
+        if (
+            ffmpeg.probe(path, select_streams="a")["streams"][1]["codec_type"]
+            == "audio"
+        ):
+            return True
+        else:
+            return False
+    except:
         return False
+
+
+def get_metadata(path):
+    """
+    Returns the metadata of a video file
+
+    Argument(s):
+        path: Absolute file path
+
+    Returns:
+        A tuple containing four entries:
+            frame_rate: Framerate of video stream
+            video_codec: Encoding format of video stream
+            sample_rate: Sample rate of audio stream or "-" if no audio stream exists
+            audio_codec: Encoding format of audio stream or "-" if no audio stream exists
+        or an None if the file is not a video file
+    """
+    try:
+        output = ["-", "-", "-", "-"]
+        metadata = ffmpeg.probe(path)
+        output[0] = str(round(eval(metadata["streams"][0]["avg_frame_rate"]), 2))
+        output[1] = metadata["streams"][0]["codec_name"].upper()
+        try:
+            output[2] = metadata["streams"][1]["sample_rate"]
+            output[3] = metadata["streams"][1]["codec_name"].upper()
+        except:
+            pass
+        return tuple(output)
+    except:
+        return None
 
 
 def transcode(
