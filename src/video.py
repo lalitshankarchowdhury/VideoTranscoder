@@ -1,4 +1,4 @@
-import ffmpeg, json
+import ffmpeg
 
 
 def is_video(path):

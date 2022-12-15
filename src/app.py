@@ -1,8 +1,12 @@
-from PyQt6.QtWidgets import *
+import os
+from multiprocessing import Pool
+
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-from pathlib import Path
-import defaults, video
+from PyQt6.QtWidgets import *
+
+import defaults
+import video
 
 is_transcoding = False
 video_codecs = {"H.264/AAC": "libx264", "H.265/HEVC": "libx265"}
@@ -32,6 +36,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("VideoTranscoder: Created by Lalit Shankar Chowdhury")
+        self.setMinimumWidth(800)
         widget = MainWidget(self)
         self.setCentralWidget(widget)
 
@@ -57,17 +62,27 @@ class TableWidget(QTableWidget):
         self.setRowCount(0)
         self.setColumnCount(5)
         self.setHorizontalHeaderLabels(
-            ["Path", "Frame rate", "Video codec", "Sample rate", "Audio codec"]
+            ["Path", "Avg. frame rate", "Video codec", "Sample rate", "Audio codec"]
         )
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.horizontalHeader().setStretchLastSection(True)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
+        self.verticalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
         font = QFont()
         font.setFamily(font.defaultFamily())
-        font.setPointSize(8)
+        font.setPointSize(9)
         self.setFont(font)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+    def insert_row(self, items):
+        nrows = self.rowCount()
+        self.insertRow(nrows)
+        for j in range(0, 5):
+            self.setItem(nrows, j, QTableWidgetItem(items[j]))
 
     def delete_row(self, row):
         for i in range(self.columnCount()):
@@ -181,17 +196,14 @@ class MainWidget(QWidget):
             options=QFileDialog.Option.ReadOnly,
         )
         if files:
-            file_paths = [str(Path(file)) for file in files[0]]
-            metadata_list = [video.get_metadata(file_path) for file_path in file_paths]
-            print(metadata_list)
-            i = self.file_table.rowCount()
+            file_paths = [str(os.path.abspath(file)) for file in files[0]]
+            pool = Pool()
+            metadata_list = list(pool.map(video.get_metadata, file_paths))
+            pool.close()
+            pool.join()
             for file_path, metadata in zip(file_paths, metadata_list):
                 if metadata:
-                    self.file_table.insertRow(self.file_table.rowCount())
-                    self.file_table.setItem(i, 0, QTableWidgetItem(file_path))
-                    for j in range(1, 5):
-                        self.file_table.setItem(i, j, QTableWidgetItem(metadata[j - 1]))
-                    i += 1
+                    self.file_table.insert_row([file_path, *metadata])
 
     def remove_files(self):
         selected_items = self.file_table.selectedItems()
@@ -210,7 +222,7 @@ class MainWidget(QWidget):
             directory=str(defaults.HOME_DIR),
             options=QFileDialog.Option.ShowDirsOnly,
         )
-        self.output_dir.setText(str(Path(folder_name)))
+        self.output_dir.setText(str(os.path.abspath(folder_name)))
 
 
 if __name__ == "__main__":

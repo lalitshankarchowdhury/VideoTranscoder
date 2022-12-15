@@ -1,5 +1,8 @@
-import os, video, defaults
+import os
 from multiprocessing import Process
+
+import defaults
+import video
 
 
 def setup_dirs(*dir_paths):
@@ -19,12 +22,12 @@ def test():
     """Driver code"""
     setup_dirs(defaults.INPUT_DIR, defaults.OUTPUT_DIR)
     input_dir = (
-        dir_path
+        os.path.abspath(dir_path.strip())
         if os.path.exists(dir_path := input("Enter input folder: "))
-        else defaults.OUTPUT_DIR
+        else defaults.INPUT_DIR
     )
     output_dir = (
-        dir_path
+        os.path.abspath(dir_path.strip())
         if os.path.exists(dir_path := input("Enter output folder: "))
         else defaults.OUTPUT_DIR
     )
@@ -65,7 +68,6 @@ def test():
             h265_transcode.join()
         else:
             print(f"{input_file} is not a video file, skipping")
-        break
 
 
 if __name__ == "__main__":
