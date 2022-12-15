@@ -62,7 +62,7 @@ class TableWidget(QTableWidget):
         self.setRowCount(0)
         self.setColumnCount(5)
         self.setHorizontalHeaderLabels(
-            ["Path", "Avg. frame rate", "Video codec", "Sample rate", "Audio codec"]
+            ["Path", "Frame rate", "Video codec", "Sample rate", "Audio codec"]
         )
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setSectionResizeMode(
@@ -202,8 +202,16 @@ class MainWidget(QWidget):
             pool.close()
             pool.join()
             for file_path, metadata in zip(file_paths, metadata_list):
-                if metadata:
-                    self.file_table.insert_row([file_path, *metadata])
+                if metadata["video_codec"] != "-":
+                    self.file_table.insert_row(
+                        [
+                            file_path,
+                            metadata["frame_rate"],
+                            metadata["video_codec"],
+                            metadata["sample_rate"],
+                            metadata["audio_codec"],
+                        ]
+                    )
 
     def remove_files(self):
         selected_items = self.file_table.selectedItems()

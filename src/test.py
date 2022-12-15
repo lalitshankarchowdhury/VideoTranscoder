@@ -33,7 +33,7 @@ def test():
     )
     for input_file in os.listdir(input_dir):
         input_file_path = os.path.join(input_dir, input_file)
-        if video.is_video(input_file_path):
+        if video.get_metadata(input_file_path)["video_codec"] != "-":
             print(f"Converting {input_file}")
             setup_dirs(
                 os.path.join(output_dir, "H264"), os.path.join(output_dir, "H265")
@@ -45,10 +45,6 @@ def test():
                 args=(
                     input_file_path,
                     output_file_path_h264,
-                    25,
-                    "libx264",
-                    44100,
-                    "aac",
                 ),
             )
             h265_transcode = Process(
@@ -56,11 +52,8 @@ def test():
                 args=(
                     input_file_path,
                     output_file_path_h265,
-                    25,
-                    "libx265",
-                    44100,
-                    "aac",
                 ),
+                kwargs={"video_codec": "libx265"},
             )
             h264_transcode.start()
             h265_transcode.start()
