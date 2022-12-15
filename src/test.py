@@ -11,7 +11,7 @@ def setup_dirs(*dir_paths):
         *dir_paths: Absolute directory path(s)
 
     Returns:
-        Nothing
+        None
     """
     for dir_path in [*dir_paths]:
         if not os.path.exists(dir_path):

@@ -58,12 +58,11 @@ def transcode(
         audio_codec: Target FFmpeg encoder of output audio stream (Default: "aac")
 
     Returns:
-        Nothing
+        None
     """
     stream = ffmpeg.input(input_file_path)
     vid_stream = ffmpeg.filter(stream.video, "fps", fps=frame_rate)
     if get_metadata(input_file_path)["audio_codec"] != "-":
-        print(f"{input_file_path} contains audio")
         final_stream = ffmpeg.output(
             vid_stream,
             stream.audio,
@@ -73,7 +72,6 @@ def transcode(
             ar=sample_rate,
         )
     else:
-        print(f"{input_file_path} contains no audio")
         final_stream = ffmpeg.output(
             vid_stream,
             output_file_path,

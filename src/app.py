@@ -191,12 +191,12 @@ class MainWidget(QWidget):
         files = dialog.getOpenFileNames(
             parent=self,
             caption="Add files",
-            directory=str(defaults.HOME_DIR),
+            directory=defaults.HOME_DIR,
             filter=file_filter,
             options=QFileDialog.Option.ReadOnly,
         )
         if files:
-            file_paths = [str(os.path.abspath(file)) for file in files[0]]
+            file_paths = [os.path.abspath(file) for file in files[0]]
             pool = Pool()
             metadata_list = list(pool.map(video.get_metadata, file_paths))
             pool.close()
@@ -227,10 +227,10 @@ class MainWidget(QWidget):
         folder_name = dialog.getExistingDirectory(
             parent=self,
             caption="Select folder",
-            directory=str(defaults.HOME_DIR),
+            directory=defaults.HOME_DIR,
             options=QFileDialog.Option.ShowDirsOnly,
         )
-        self.output_dir.setText(str(os.path.abspath(folder_name)))
+        self.output_dir.setText(os.path.abspath(folder_name))
 
 
 if __name__ == "__main__":
