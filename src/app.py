@@ -62,7 +62,7 @@ class TableWidget(QTableWidget):
         self.setRowCount(0)
         self.setColumnCount(5)
         self.setHorizontalHeaderLabels(
-            ["Path", "Frame rate", "Video codec", "Sample rate", "Audio codec"]
+            ["Path", "Video codec", "Frame rate", "Audio codec", "Sample rate"]
         )
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setSectionResizeMode(
@@ -77,6 +77,17 @@ class TableWidget(QTableWidget):
         self.setFont(font)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.model().rowsInserted.connect(self.set_table_status_inserted)
+        self.model().rowsRemoved.connect(self.set_table_status_removed)
+        self.setEnabled(False)
+
+    def set_table_status_inserted(self):
+        if not self.isEnabled():
+            self.setEnabled(True)
+
+    def set_table_status_removed(self):
+        if self.rowCount() == 0:
+            self.setEnabled(False)
 
     def insert_row(self, items):
         nrows = self.rowCount()
@@ -173,14 +184,14 @@ class MainWidget(QWidget):
 
     def draw_run_box_items(self):
         layout = QHBoxLayout()
-        start_button = QPushButton("▶️ Start")
-        pause_button = QPushButton("⏯️ Pause")
-        stop_button = QPushButton("⏹️ Stop")
-        progress_bar = QProgressBar()
-        layout.addWidget(start_button)
-        layout.addWidget(pause_button)
-        layout.addWidget(stop_button)
-        layout.addWidget(progress_bar)
+        self.start_button = QPushButton("🚩 Start")
+        self.pause_button = QPushButton("⏯️ Pause")
+        self.stop_button = QPushButton("⏹️ Stop")
+        self.progress_bar = QProgressBar()
+        layout.addWidget(self.start_button)
+        layout.addWidget(self.pause_button)
+        layout.addWidget(self.stop_button)
+        layout.addWidget(self.progress_bar)
         self.run_group_box.setLayout(layout)
 
     def add_files(self):
@@ -206,10 +217,10 @@ class MainWidget(QWidget):
                     self.file_table.insert_row(
                         [
                             file_path,
-                            metadata["frame_rate"],
                             metadata["video_codec"],
-                            metadata["sample_rate"],
+                            metadata["frame_rate"],
                             metadata["audio_codec"],
+                            metadata["sample_rate"],
                         ]
                     )
 

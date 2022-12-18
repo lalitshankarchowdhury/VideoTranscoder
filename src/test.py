@@ -8,9 +8,11 @@ import video
 def setup_dirs(*dir_paths):
     """Create folder(s) if not existing
     Argument(s):
+
         *dir_paths: Absolute directory path(s)
 
     Returns:
+
         None
     """
     for dir_path in [*dir_paths]:

@@ -6,31 +6,36 @@ def get_metadata(path):
     Returns the metadata of a video file
 
     Argument(s):
+
         path: Absolute file path
 
     Returns:
+
         A dictionary containing four keys:
-            frame_rate: Framerate of video stream or "-" if no video stream exists
+
             video_codec: Encoding format of video stream or "-" if no video stream exists
-            sample_rate: Sample rate of audio stream or "-" if no audio stream exists
+
+            frame_rate: Framerate of video stream or "-" if no video stream exists
+
             audio_codec: Encoding format of audio stream or "-" if no audio stream exists
+
+            sample_rate: Sample rate of audio stream or "-" if no audio stream exists
     """
     output = {
-        "frame_rate": "-",
         "video_codec": "-",
-        "sample_rate": "-",
+        "frame_rate": "-",
         "audio_codec": "-",
+        "sample_rate": "-",
     }
     try:
-        video_metadata = ffmpeg.probe(path, select_streams="v")
-        output["frame_rate"] = str(
-            round(eval(video_metadata["streams"][0]["r_frame_rate"]), 2)
-        )
-        output["video_codec"] = video_metadata["streams"][0]["codec_name"].upper()
+        av_metadata = ffmpeg.probe(path)["streams"]
+        video_metadata = [x for x in av_metadata if x["codec_type"] == "video"]
+        audio_metadata = [x for x in av_metadata if x["codec_type"] == "audio"]
+        output["video_codec"] = video_metadata[0]["codec_name"].upper()
+        output["frame_rate"] = str(round(eval(video_metadata[0]["r_frame_rate"]), 2))
         try:
-            audio_metadata = ffmpeg.probe(path, select_streams="a")
-            output["sample_rate"] = audio_metadata["streams"][0]["sample_rate"]
-            output["audio_codec"] = audio_metadata["streams"][0]["codec_name"].upper()
+            output["audio_codec"] = audio_metadata[0]["codec_name"].upper()
+            output["sample_rate"] = audio_metadata[0]["sample_rate"]
         except:
             pass
     except:
@@ -41,23 +46,30 @@ def get_metadata(path):
 def transcode(
     input_file_path,
     output_file_path,
-    frame_rate=25,
     video_codec="libx264",
-    sample_rate=44100,
+    frame_rate=25,
     audio_codec="aac",
+    sample_rate=44100,
 ):
     """
     Transcodes MP4 video file into specified audio/video encoding and framerate
 
     Argument(s):
+
         input_file_path: Absolute path of input file
+
         output_file_path: Absolute path of output file
-        frame_rate: Target framerate of output video stream (Default: 25)
-        video_codec: Target FFmpeg encoder of output video stream (Default: "libx264")
-        sample_rate: Target sample rate of output audio stream (Default: 44100)
-        audio_codec: Target FFmpeg encoder of output audio stream (Default: "aac")
+
+        video_codec: Encoding format of video stream or "-" if no video stream exists
+
+        frame_rate: Framerate of video stream or "-" if no video stream exists
+
+        audio_codec: Encoding format of audio stream or "-" if no audio stream exists
+
+        sample_rate: Sample rate of audio stream or "-" if no audio stream exists
 
     Returns:
+
         None
     """
     stream = ffmpeg.input(input_file_path)
